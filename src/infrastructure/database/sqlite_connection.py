@@ -126,6 +126,106 @@ class SQLiteConnection:
             ON music_production_bookings(status)
         """)
         
+        # Create bookings table for mix_master domain
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS mix_master_bookings (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                user_name TEXT NOT NULL,
+                user_contact TEXT NOT NULL,
+                plan_id TEXT,
+                plan_name TEXT,
+                plan_price TEXT,
+                tracking_code TEXT,
+                created_at TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                updated_at TEXT
+            )
+        """)
+        
+        # Create bookings table for consultation domain
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS consultation_bookings (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                user_name TEXT NOT NULL,
+                user_contact TEXT NOT NULL,
+                consultant_id TEXT,
+                consultant_name TEXT,
+                tracking_code TEXT,
+                created_at TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                updated_at TEXT
+            )
+        """)
+        
+        # Create bookings table for distribution domain
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS distribution_bookings (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                user_name TEXT NOT NULL,
+                user_contact TEXT NOT NULL,
+                pricing_id TEXT,
+                pricing_name TEXT,
+                pricing_price TEXT,
+                platforms TEXT,
+                release_date TEXT,
+                tracking_code TEXT,
+                created_at TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                updated_at TEXT
+            )
+        """)
+        
+        # Add pricing columns if they don't exist (for existing databases)
+        try:
+            cursor.execute("ALTER TABLE distribution_bookings ADD COLUMN pricing_id TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE distribution_bookings ADD COLUMN pricing_name TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE distribution_bookings ADD COLUMN pricing_price TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
+        
+        # Create indexes
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_mix_master_bookings_user_id 
+            ON mix_master_bookings(user_id)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_mix_master_bookings_status 
+            ON mix_master_bookings(status)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_consultation_bookings_user_id 
+            ON consultation_bookings(user_id)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_consultation_bookings_status 
+            ON consultation_bookings(status)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_distribution_bookings_user_id 
+            ON distribution_bookings(user_id)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_distribution_bookings_status 
+            ON distribution_bookings(status)
+        """)
+        
         conn.commit()
         logger.info("Database schema initialized")
     

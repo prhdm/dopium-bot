@@ -54,11 +54,12 @@ def create_reply_keyboard() -> ReplyKeyboardMarkup:
     )
 
 
-def create_cancel_keyboard() -> ReplyKeyboardMarkup:
-    """Create a keyboard with only cancel button (used during flows)."""
-    keyboard = [
-        [KeyboardButton("لغو")]
-    ]
+def create_cancel_keyboard(show_back: bool = False) -> ReplyKeyboardMarkup:
+    """Create a keyboard with cancel and optionally back button (used during flows)."""
+    keyboard = []
+    if show_back:
+        keyboard.append([KeyboardButton("بازگشت")])
+    keyboard.append([KeyboardButton("لغو")])
     return ReplyKeyboardMarkup(
         keyboard,
         resize_keyboard=True,
@@ -86,6 +87,41 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             return
         else:
             await query.answer("❌ شما دسترسی مدیریت ندارید.")
+            return
+    
+    # Check for admin history callbacks
+    if query.data.startswith("history_"):
+        from domains.admin.handlers.admin_handler import AdminHandler
+        admin_handler = AdminHandler()
+        
+        if admin_handler.is_admin(query.from_user.id):
+            if query.data == "history_categories":
+                await query.answer()
+                await admin_handler.show_order_history_categories(update, context)
+                return
+            elif query.data.startswith("history_page_"):
+                # Pagination callback - handled in show_order_history
+                category = query.data.replace("history_page_", "").split("_")[0]
+                await admin_handler.show_order_history(update, context, category)
+                return
+            else:
+                category = query.data.replace("history_", "")
+                await query.answer()
+                await admin_handler.show_order_history(update, context, category)
+                return
+        else:
+            await query.answer("❌ شما دسترسی مدیریت ندارید.")
+            return
+    
+    # Check for flow back button
+    if query.data == "flow_back":
+        current_flow_state = context.user_data.get("flow_state")
+        if current_flow_state:
+            await query.answer()
+            await FlowManager.handle_back(update, context, current_flow_state)
+            return
+        else:
+            await query.answer("❌ در حال حاضر در فلو نیستید.")
             return
     
     # Check if user is in an active flow
@@ -123,14 +159,40 @@ async def handle_reply_keyboard(update: Update, context: ContextTypes.DEFAULT_TY
     admin_handler = AdminHandler()
     
     if admin_handler.is_admin(update.effective_user.id):
+        # Check if admin is in search mode
+        if context.user_data.get("admin_search_mode"):
+            # If admin clicks on an admin button, exit search mode and execute that action
+            if text == "تایید سفارش":
+                context.user_data["admin_search_mode"] = False
+                await admin_handler.show_pending_orders(update, context)
+                return
+            elif text == "جستجوی سفارش":
+                # Already in search mode, just show the prompt again
+                await admin_handler.search_order(update, context)
+                return
+            elif text == "تاریخچه سفارشات":
+                context.user_data["admin_search_mode"] = False
+                await admin_handler.show_order_history_categories(update, context)
+                return
+            else:
+                # In search mode, any other text input is treated as tracking code
+                await admin_handler.handle_search_input(update, context, text)
+                return
+        
         if text == "تایید سفارش":
             await admin_handler.show_pending_orders(update, context)
             return
-        elif text == "لغو" and not context.user_data.get("flow_state"):
-            # Admin cancel - return to main menu
+        elif text == "جستجوی سفارش":
+            await admin_handler.search_order(update, context)
+            return
+        elif text == "تاریخچه سفارشات":
+            await admin_handler.show_order_history_categories(update, context)
+            return
+        else:
+            # Unknown admin command - show admin menu
             await update.message.reply_text(
-                "لطفا گزینه مورد نظر خود را انتخاب کنید:",
-                reply_markup=create_reply_keyboard()
+                "لطفا یکی از گزینه‌های منوی مدیریت را انتخاب کنید:",
+                reply_markup=admin_handler.create_admin_keyboard()
             )
             return
     
@@ -144,6 +206,7 @@ async def handle_reply_keyboard(update: Update, context: ContextTypes.DEFAULT_TY
             context.user_data["flow_state"] = None
             context.user_data["current_step"] = None
             context.user_data["flow_data"] = {}
+            context.user_data["flow_step_history"] = []
             
             main_keyboard = create_reply_keyboard()
             await update.message.reply_text(
@@ -152,7 +215,7 @@ async def handle_reply_keyboard(update: Update, context: ContextTypes.DEFAULT_TY
             )
             return
         
-        # Process flow input (not cancel)
+        # Process flow input (not cancel or back)
         user_input = text
         await FlowManager.handle_input(update, context, current_flow_state, user_input)
     else:

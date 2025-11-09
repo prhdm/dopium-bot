@@ -123,6 +123,53 @@ class MusicProductionBookingRepository:
         rows = cursor.fetchall()
         return [self._row_to_booking(row) for row in rows]
     
+    def find_by_tracking_code(self, tracking_code: str) -> Optional[Booking]:
+        """
+        Find booking by tracking code.
+        
+        Args:
+            tracking_code: Tracking code
+            
+        Returns:
+            Booking entity or None if not found
+        """
+        conn = self._db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, user_id, user_name, user_contact, service_tier_id,
+                   service_option_id, tracking_code, created_at, status
+            FROM music_production_bookings
+            WHERE tracking_code = ?
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (tracking_code,))
+        
+        row = cursor.fetchone()
+        if row:
+            return self._row_to_booking(row)
+        return None
+    
+    def find_all(self) -> list[Booking]:
+        """
+        Find all bookings regardless of status.
+        
+        Returns:
+            List of all booking entities, sorted by created_at DESC (newest first)
+        """
+        conn = self._db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT id, user_id, user_name, user_contact, service_tier_id,
+                   service_option_id, tracking_code, created_at, status
+            FROM music_production_bookings
+            ORDER BY created_at DESC
+        """)
+        
+        rows = cursor.fetchall()
+        return [self._row_to_booking(row) for row in rows]
+    
     def _row_to_booking(self, row) -> Booking:
         """Convert database row to Booking entity."""
         return Booking(

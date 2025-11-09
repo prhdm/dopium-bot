@@ -23,6 +23,9 @@ from domains.music_production import (
     CompleteBookingUseCase as MPCompleteBookingUseCase,
     MusicProductionFlowHandler,
 )
+from domains.mix_master import MixMasterFlowHandler
+from domains.consultation import ConsultationFlowHandler
+from domains.distribution import DistributionFlowHandler
 
 # Configure logging
 logging.basicConfig(
@@ -64,6 +67,18 @@ def initialize_domain_handlers():
         mp_complete
     )
     FlowManager.register_handler("music_production", mp_handler)
+    
+    # Mix Master domain
+    mix_master_handler = MixMasterFlowHandler()
+    FlowManager.register_handler("mix_master", mix_master_handler)
+    
+    # Consultation domain
+    consultation_handler = ConsultationFlowHandler()
+    FlowManager.register_handler("consultation", consultation_handler)
+    
+    # Distribution domain
+    distribution_handler = DistributionFlowHandler()
+    FlowManager.register_handler("distribution", distribution_handler)
 
 
 def main() -> None:

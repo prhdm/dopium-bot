@@ -35,7 +35,7 @@ class BookingResponseDTO:
             f"🎚️ پلن: {self.service_tier_name}\n"
             f"🎵 سرویس: {self.service_option_name}\n"
             f"💰 قیمت: {self.service_option_price}\n"
-            f"🔖 کد رهگیری: {self.tracking_code}\n"
+            f"🔖 کد رهگیری: `{self.tracking_code}`\n"
             f"📊 وضعیت: {self.status}"
         )
 

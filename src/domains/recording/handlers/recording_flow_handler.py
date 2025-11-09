@@ -182,7 +182,8 @@ class RecordingFlowHandler:
             try:
                 await context.bot.send_message(
                     chat_id=group_id,
-                    text=booking_message
+                    text=booking_message,
+                    parse_mode='Markdown'
                 )
             except Exception as e:
                 print(f"Failed to send message to group: {e}")
@@ -196,7 +197,7 @@ class RecordingFlowHandler:
             f"• سرویس: {booking_response.service_option_name}\n"
             f"• قیمت: {price_display}\n"
             f"• تماس شما: {booking_response.user_contact}\n"
-            f"• 🔖 کد رهگیری: {booking_response.tracking_code}\n\n"
+            f"• 🔖 کد رهگیری: `{booking_response.tracking_code}`\n\n"
             f"💳 برای پرداخت و تکمیل سفارش، اطلاعات خود را به پشتیبانی ارسال کنید.\n"
             f"📞 به زودی با شما تماس گرفته خواهد شد."
         )
