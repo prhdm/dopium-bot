@@ -28,9 +28,18 @@ from domains.consultation import ConsultationFlowHandler
 from domains.distribution import DistributionFlowHandler
 
 # Configure logging
+# Create logs directory if it doesn't exist
+log_dir = Path(__file__).parent / "logs"
+log_dir.mkdir(exist_ok=True)
+
+# Configure logging with file handler
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.INFO,
+    handlers=[
+        logging.FileHandler(log_dir / "bot.log", encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)  # Also log to console
+    ]
 )
 logger = logging.getLogger(__name__)
 

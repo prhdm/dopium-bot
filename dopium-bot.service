@@ -1,0 +1,18 @@
+[Unit]
+Description=Dopium Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/path/to/Dopium
+Environment="PATH=/path/to/Dopium/venv/bin"
+ExecStart=/path/to/Dopium/venv/bin/python /path/to/Dopium/main.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/path/to/Dopium/logs/bot.log
+StandardError=append:/path/to/Dopium/logs/bot.error.log
+
+[Install]
+WantedBy=multi-user.target
+

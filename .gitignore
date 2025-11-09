@@ -46,6 +46,7 @@ data/
 # Logs
 *.log
 logs/
+bot.pid
 
 # OS
 .DS_Store
